@@ -3,7 +3,7 @@
 
 # In[ ]:
 
-
+import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import networkx as nx
@@ -17,6 +17,7 @@ G=nx.erdos_renyi_graph(n,p,directed=True)
 nx.draw(G, with_labels=True, node_color='skyblue',
         edge_color='black')
 plt.show()
+#图的邻接矩阵
 A=nx.adjacency_matrix(G)
 print(G.number_of_edges())
 #print(A)
@@ -27,20 +28,20 @@ print(matrix)
 # In[2]:
 
 
-#出度
-row_summs=np.sum(matrix,axis=1)
-#入度
-column_summs=np.sum(matrix,axis=0)
+#出度 Out-degree
+out_degree =np.sum(matrix,axis=1)
+#入度 in_degree
+in_degree=np.sum(matrix,axis=0)
 #入度的度
-degrees= matrix.sum(axis=0)
+#degrees= matrix.sum(axis=0)
 
 
 # In[3]:
 
 
-#判断有环没有
+#判断有环没有 通过拓扑排序
 import queue
-def graph_is_ring(matrix):
+def is_directed_acyclic_graph(matrix):
     n=len(matrix)
     q=queue.Queue()
     visited=[]
@@ -67,20 +68,24 @@ def graph_is_ring(matrix):
 
 
 #Generate possible solution vectors
+#通过排列组合 遍历所有可能潜在存在的解
 def solution_vector(n,r):
     iterable=list(range(n))
     result=combinations(iterable,r)
     list_result=list(result)
     return  list_result
 #Determine whether it is a solution vector
+#根据有没有环，从潜在存在的解向量长度从小到大开始探索
+#从而找到最小的解
 def sol_is_fvs(matrix,vector_solution):
     for i in range(0,len(vector_solution)):
             node=vector_solution[i]
             matrix[node,:]=0
             matrix[:,node]=0
-    return  graph_is_ring(matrix)
+    return  is_directed_acyclic_graph(matrix)
 #Brute force algorithm
-def baoli_solution(n,matrix):
+#暴力算法求解
+def brute_force_solution(n,matrix):
     solution_node=[]
     for i in range(0,n):
         list_result=solution_vector(n,i)
@@ -103,7 +108,8 @@ def baoli_solution(n,matrix):
 
 
 # Brute force algorithm for many solutions
-def bao_many(n,matrix,L):
+#根据上面找的最小长度的解，遍历其他同样长度下潜在的解
+def many_solutions(n,matrix,L):
     solution_node=[]
     matrix_solution=[]
     list_result=solution_vector(n,L)
@@ -125,28 +131,27 @@ def bao_many(n,matrix,L):
 
 # In[ ]:
 
-
+#输出解
 matrix_test=copy.copy(matrix)
-solution_node=baoli_solution(n,matrix)
+solution_node=brute_force_solution(n,matrix)
 print(solution_node)
 
 
 # In[ ]:
 
-
+#输出解
 L=len(solution_node)
-matrix_solution=bao_many(n,matrix,L)
+matrix_solution=many_solutions(n,matrix,L)
 print(matrix_solution)
 
-import pandas as pd
 adj_matrix=np.array(matrix)
 lables=np.array(matrix_solution)
-#更新数据
+#存入更新数据
 existingdata=np.load('graphs_data.npz')
 new_data={'adj_matrix_200':adj_matrix,
          'lables_200':lables}
 updated_data={**existingdata,**new_data}
-np.savez('graphs_data.npz',
-        **updated_data)data=np.load('graphs_data.npz')
+np.savez('graphs_data.npz',**updated_data)
+data=np.load('graphs_data.npz')
 print(len(data))
 #print(data['lables_50'])
